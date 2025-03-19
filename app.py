@@ -2,7 +2,7 @@ import pandas as pd
 import streamlit as st
 
 # Load the file directly from GitHub
-file_url = "https://raw.githubusercontent.com/CelestialAkashh/project-search-tool/main/your-file.xlsx"
+file_url = "https://github.com/CelestialAkashh/project-search-tool/raw/refs/heads/main/Copy%20of%20REAL%20Consolidated%20Project%20Portfolio.xlsx"
 
 @st.cache_data
 def load_data():
