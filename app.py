@@ -3,11 +3,17 @@ import streamlit as st
 
 st.title("🔍 Project Search Tool")
 
-# Upload Excel file
-uploaded_file = st.file_uploader("Upload your Excel file", type=["xlsx"])
+# Load file directly from GitHub
+file_url = "https://github.com/CelestialAkashh/project-search-tool/raw/refs/heads/main/Copy%20of%20REAL%20Consolidated%20Project%20Portfolio.xlsx"
 
-if uploaded_file:
-    df = pd.read_excel(uploaded_file, sheet_name="New Portfolio")  # Change sheet name if needed
+@st.cache_data
+def load_data(url):
+    df = pd.read_excel(url, sheet_name="New Portfolio")  # Change sheet name if needed
+    return df
+
+df = load_data(file_url)
+
+
     st.write("### Columns in file:", df.columns.tolist())
 
     # Rename columns (Modify if needed)
