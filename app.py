@@ -72,6 +72,10 @@ if not filtered_df.empty:
         for company, desc in project_descriptions.items():
             st.write(f"**{company}:** {desc}")
 
+st.write("🔍 Debugging Info:")
+st.write(f"API Key Loaded: {'✅ Yes' if 'OPENROUTER_API_KEY' in st.secrets else '❌ No'}")
+st.write("Sending request to OpenRouter...")
+
         # 🔹 Generate AI-Powered Email
         def generate_email(company1, desc1, company2, desc2):
             API_KEY = st.secrets["OPENROUTER_API_KEY"]
