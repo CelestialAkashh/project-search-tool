@@ -72,12 +72,12 @@ def summarize_text(text):
         messages=[
             {"role": "system", "content": "You are an AI assistant that summarizes company details."},
             {"role": "user", "content": text}
-        ]
-    )
+            ]
+            )
     return response["choices"][0]["message"]["content"]
 
-
-                summary = summarize_text(raw_text)
+             # Correct indentation
+               summary = summarize_text(raw_text)
 
                 project_info.append(f"**{project}**: {summary}")
 
