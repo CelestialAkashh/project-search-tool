@@ -90,10 +90,13 @@ if not filtered_df.empty:
 
             # Iterate over available links and extract from the first valid website link
             for link in project_links[company]:
-                if website_data is None:
+                # Process only if it's a valid non-app store link
+                if not any(re.search(pattern, link) for pattern in app_store_patterns):
                     website_data = extract_project_info(link)
+                    if website_data:
+                        break  # Stop after the first valid website is processed
 
-            # If no valid website was found, set the description to 'No website available.'
+            # If no valid website was found, set the description to 'No valid website available.'
             project_descriptions[company] = website_data or "No valid website available."
 
         # 🔹 Display Extracted Info
