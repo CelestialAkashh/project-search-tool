@@ -2,6 +2,7 @@ import pandas as pd
 import streamlit as st
 import requests
 from bs4 import BeautifulSoup
+import openai  # Add OpenAI API
 
 # 🔹 Load Excel File from GitHub
 file_url = "https://github.com/CelestialAkashh/project-search-tool/raw/refs/heads/main/Copy%20of%20REAL%20Consolidated%20Project%20Portfolio.xlsx"
@@ -82,6 +83,9 @@ if not filtered_df.empty:
         # 🔹 Generate AI Email
         if st.button("Generate AI-Powered Email"):
             with st.spinner("Generating email..."):
+                # OpenAI API key setup
+                openai.api_key = "your-openai-api-key-here"  # Set your API key here
+
                 email_prompt = f"""
                 Generate a professional business email for a client. The email should introduce our company, highlight these two selected projects, and explain how we can help them with similar solutions.
                 
@@ -91,9 +95,16 @@ if not filtered_df.empty:
                 
                 Format it professionally.
                 """
-                
-                with st.chat_message("assistant"):
-                    email_draft = st.write("📧 **AI-Generated Email:**")
-                    email_draft = st.write(email_prompt)  # Display generated email
-                
-                st.text_area("📧 AI-Generated Email", email_prompt, height=350)
+
+                # Make API call to OpenAI to generate email
+                response = openai.Completion.create(
+                    engine="text-davinci-003",  # You can use the GPT-3 or GPT-4 model depending on your subscription
+                    prompt=email_prompt,
+                    max_tokens=500,
+                    temperature=0.7
+                )
+
+                # Display the generated email
+                email_content = response.choices[0].text.strip()
+
+                st.text_area("📧 AI-Generated Email", email_content, height=350)
