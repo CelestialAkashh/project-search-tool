@@ -2,6 +2,7 @@ import pandas as pd
 import streamlit as st
 import requests
 from bs4 import BeautifulSoup
+import re
 
 # 🔹 Load Excel File from GitHub
 file_url = "https://github.com/CelestialAkashh/project-search-tool/raw/refs/heads/main/Copy%20of%20REAL%20Consolidated%20Project%20Portfolio.xlsx"
@@ -54,7 +55,11 @@ if not filtered_df.empty:
 
         # 🔹 Extract Website Data using BeautifulSoup
         def extract_project_info(url):
-            if any(pattern in url for pattern in app_store_patterns):
+            # Debugging: Print the URL being processed
+            st.write(f"Processing URL: {url}")
+
+            # Skip app store URLs as they won't have useful content
+            if any(re.search(pattern, url) for pattern in app_store_patterns):
                 return None  # Skip app store links entirely
 
             if not url.startswith("http"):
@@ -79,10 +84,11 @@ if not filtered_df.empty:
 
             # Iterate over available links and extract from the first valid website link
             for link in project_links[company]:
-                if not any(pattern in link for pattern in app_store_patterns):
-                    website_data = extract_project_info(link)
-                    if website_data:
-                        break  # Stop after the first valid website is processed
+                # Debug: Show links being processed
+                st.write(f"Attempting to process link: {link}")
+                website_data = extract_project_info(link)
+                if website_data:
+                    break  # Stop after the first valid website is processed
 
             # If no valid website was found, set the description to 'No valid website available.'
             project_descriptions[company] = website_data or "No valid website available."
