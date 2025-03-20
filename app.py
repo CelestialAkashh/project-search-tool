@@ -51,11 +51,11 @@ if not filtered_df.empty:
             links = project_info.get("Link", "").split(",")  # Split multiple links by commas
             project_links[company] = [link.strip() for link in links if 'http' in link]  # Only consider valid links
 
+        # 🔹 App Store Patterns: This is now declared outside the function
+        app_store_patterns = [r"play.google.com", r"apps.apple.com"]
+
         # 🔹 Extract Website Data using BeautifulSoup
         def extract_project_info(url):
-            # Define app store patterns here
-            app_store_patterns = [r"play.google.com", r"apps.apple.com"]
-
             # Debugging: Print the URL being processed
             st.write(f"Processing URL: {url}")
 
