@@ -1,6 +1,8 @@
-import pandas as pd
 import streamlit as st
 import requests
+import pandas as pd
+from bs4 import BeautifulSoup
+import re
 
 # 🔹 Load Excel File from GitHub
 file_url = "https://github.com/CelestialAkashh/project-search-tool/raw/refs/heads/main/Copy%20of%20REAL%20Consolidated%20Project%20Portfolio.xlsx"
@@ -13,10 +15,10 @@ df = load_data()
 
 st.title("🚀 AI-Powered Project Search & Email Generator")
 
-# 🔹 Search bar
+# 🔹 Search Bar
 search_query = st.text_input("Enter keywords (e.g., React Native, Fintech):")
 
-# 🔹 Filtering logic
+# 🔹 Filtering Logic
 filtered_df = pd.DataFrame()
 
 if search_query:
@@ -34,37 +36,76 @@ if not filtered_df.empty:
     if selected_projects:
         project_descriptions = {}
 
-        # 🔹 OpenRouter API Function (Scraping + Email)
-        def get_project_info_and_email(query):
-            """Fetches project-related data + generates email via OpenRouter"""
-            API_KEY = st.secrets["OPENROUTER_API_KEY"]  # Use API key securely
-            url = "https://openrouter.ai/api/generate"
-            headers = {"Authorization": f"Bearer {API_KEY}"}
-            payload = {
-                "model": "deepseek-chat",  # Use free DeepSeek model
-                "prompt": f"Provide detailed information about {query} for a business email.",
-                "max_tokens": 500
-            }
+        # 🔹 Website Scraping Function
+        def extract_project_info(urls):
+            """Extracts website title & meta description from first valid link"""
+            if not urls:
+                return "No valid website available."
 
-            try:
-                response = requests.post(url, headers=headers, json=payload)
-                if response.status_code == 200:
-                    return response.json()["choices"][0]["message"]["content"]
-                else:
-                    return "No valid data found."
-            except Exception as e:
-                return f"Error: {e}"
+            valid_links = [link.strip() for link in urls.split() if 'http' in link and not any(re.search(pattern, link) for pattern in [r"play.google.com", r"apps.apple.com"])]
 
-        # 🔹 Fetch project info using OpenRouter API
+            if not valid_links:
+                return "No valid website available."
+
+            for url in valid_links:
+                try:
+                    response = requests.get(url, timeout=5)
+                    if response.status_code == 200:
+                        soup = BeautifulSoup(response.text, "html.parser")
+                        title = soup.title.text if soup.title else "No title found"
+                        meta_desc = soup.find("meta", attrs={"name": "description"})
+                        description = meta_desc["content"] if meta_desc else "No description available."
+                        return f"{title} - {description}"
+                except:
+                    continue  
+
+            return "No valid website available."
+
+        # 🔹 Process Selected Projects
         for company in selected_projects:
             project_info = filtered_df[filtered_df["Company Name"] == company].iloc[0]
-            with st.spinner(f"Extracting & generating email for {company}..."):
-                project_descriptions[company] = get_project_info_and_email(company)
+            with st.spinner(f"Extracting info for {company}..."):
+                project_descriptions[company] = extract_project_info(project_info.get("Link", ""))
 
         # 🔹 Display Extracted Info
         st.write("### Extracted Project Info:")
         for company, desc in project_descriptions.items():
             st.write(f"**{company}:** {desc}")
 
-        # 🔹 Show AI-Generated Email
-        st.text_area("📧 AI-Generated Email", project_descriptions[selected_projects[0]], height=350)
+        # 🔹 Generate AI-Powered Email
+        def generate_email(company1, desc1, company2, desc2):
+            API_KEY = st.secrets["OPENROUTER_API_KEY"]
+            url = "https://openrouter.ai/api/generate"
+            headers = {"Authorization": f"Bearer {API_KEY}"}
+            prompt = f"""
+            Generate a professional email for a fintech company, highlighting past work done for {company1} and {company2}.
+            - {company1}: {desc1}
+            - {company2}: {desc2}
+            The email should be structured, formal, and engaging.
+            """
+
+            payload = {
+                "model": "deepseek-chat",
+                "prompt": prompt,
+                "max_tokens": 500
+            }
+
+            try:
+                response = requests.post(url, headers=headers, json=payload)
+
+                if response.status_code == 200:
+                    data = response.json()
+                    if "choices" in data and len(data["choices"]) > 0:
+                        return data["choices"][0]["message"]["content"]
+                    else:
+                        return "⚠️ AI could not generate a response. Try again."
+                else:
+                    return f"❌ API Error {response.status_code}: {response.text}"
+
+            except requests.exceptions.RequestException as e:
+                return f"🚨 Network Error: {e}"
+
+        # 🔹 AI Email Generation Button
+        if st.button("Generate AI-Powered Email"):
+            email_content = generate_email(selected_projects[0], project_descriptions[selected_projects[0]], selected_projects[1], project_descriptions[selected_projects[1]])
+            st.text_area("📧 AI-Generated Email", email_content, height=350)
