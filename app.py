@@ -48,15 +48,15 @@ if not filtered_df.empty:
 
         for company in selected_projects:
             project_info = filtered_df[filtered_df["Company Name"] == company].iloc[0]
-            link = project_info.get("Link", "No website found")
-            project_links[company] = link
+            links = project_info.get("Link", "").split(",")  # Split multiple links by commas
+            project_links[company] = [link.strip() for link in links if 'http' in link]  # Only consider valid links
 
         # 🔹 Extract Website Data using BeautifulSoup
         def extract_project_info(url):
             # Skip app store URLs as they won't have useful content
             app_store_patterns = [r"play.google.com", r"apps.apple.com"]
             if any(re.search(pattern, url) for pattern in app_store_patterns):
-                return "This is an app store link, no summary available."
+                return None  # Skip app store links entirely
 
             if not url.startswith("http"):
                 return "No website available."
@@ -76,12 +76,17 @@ if not filtered_df.empty:
             except Exception as e:
                 return f"Error extracting data: {str(e)}"
 
-        # 🔹 Process each selected project
+        # 🔹 Process each selected project and extract info from valid website links
         for company in selected_projects:
-            if project_links.get(company) and project_links[company].startswith("http"):
-                project_descriptions[company] = extract_project_info(project_links[company])
-            else:
-                project_descriptions[company] = "No valid website available."
+            website_data = None
+
+            # Iterate over available links and extract from the first valid website link
+            for link in project_links[company]:
+                if website_data is None:
+                    website_data = extract_project_info(link)
+
+            # If no valid website was found, set the description to 'No website available.'
+            project_descriptions[company] = website_data or "No valid website available."
 
         # 🔹 Display Extracted Info
         st.write("### Extracted Project Info:")
