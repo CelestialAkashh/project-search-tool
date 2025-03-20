@@ -41,14 +41,14 @@ if search_query:
         st.write(f"### Found {len(filtered_df)} matching projects:")
         st.dataframe(filtered_df)
 
-        # Ensure "Project Name" column exists before using it
-        if "Project Name" in filtered_df.columns:
-            options = filtered_df["Project Name"].tolist()
+        # Ensure "Company Name" column exists before using it
+        if "Company Name" in filtered_df.columns:
+            options = filtered_df["company Name"].tolist()
             selected_projects = st.multiselect("Select up to 2 projects:", options, max_selections=2)
 
             # Store selected project details
             if selected_projects:
-                project_details = filtered_df[filtered_df["Project Name"].isin(selected_projects)]
+                project_details = filtered_df[filtered_df["Company Name"].isin(selected_projects)]
 
                 # Display selected project details
                 st.write("### Selected Projects:")
