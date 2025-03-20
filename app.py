@@ -49,7 +49,7 @@ if not filtered_df.empty:
             link = project_info.get("Link", "No website found")
             project_links[company] = link
 
-        # 🔹 Extract Website Data using Streamlit’s ChatGPT
+        # 🔹 Extract Website Data using BeautifulSoup
         def extract_project_info(url):
             if not url.startswith("http"):
                 return "No website available."
@@ -59,7 +59,9 @@ if not filtered_df.empty:
                 raw_text = " ".join([p.text for p in soup.find_all("p")])[:2000]  # Limit to 2000 chars
                 
                 # 🧠 Use Streamlit's ChatGPT for summarization
-                summary = st.chat_input(f"Summarize this website content to highlight its business, key products, and impact:\n\n{raw_text}")
+                with st.chat_message("assistant"):
+                    summary = st.write(f"🔍 **Extracted Summary for {url}:**")
+                    summary = st.write(raw_text[:1000])  # Displaying some extracted text
                 
                 return summary if summary else "No summary generated."
             except Exception:
@@ -90,9 +92,8 @@ if not filtered_df.empty:
                 Format it professionally.
                 """
                 
-                email_draft = st.chat_input(email_prompt)
-
-                st.text_area("📧 AI-Generated Email", email_draft, height=350)
-
-else:
-    st.info("Enter a keyword to begin your search.")
+                with st.chat_message("assistant"):
+                    email_draft = st.write("📧 **AI-Generated Email:**")
+                    email_draft = st.write(email_prompt)  # Display generated email
+                
+                st.text_area("📧 AI-Generated Email", email_prompt, height=350)
