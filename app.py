@@ -14,14 +14,11 @@ df = load_data()
 
 st.title("🚀 AI-Powered Project Search & Email Generator")
 
-# 🔹 Show available columns
-st.write("### Available Columns:", df.columns.tolist())
-
 # 🔹 Search bar
 search_query = st.text_input("Enter keywords (e.g., React Native, Fintech):")
 
 # 🔹 Filtering logic
-filtered_df = pd.DataFrame()  # Empty DataFrame initially
+filtered_df = pd.DataFrame()
 
 if search_query:
     query = search_query.strip().lower()
@@ -51,49 +48,51 @@ if not filtered_df.empty:
             project_info = filtered_df[filtered_df["Company Name"] == company].iloc[0]
             link = project_info.get("Link", "No website found")
             project_links[company] = link
-            
-            # 🔹 Extract Website Data
-            def extract_project_info(url):
-                if not url.startswith("http"):
-                    return "No website available."
-                try:
-                    response = requests.get(url, timeout=5)
-                    soup = BeautifulSoup(response.text, "html.parser")
-                    raw_text = " ".join([p.text for p in soup.find_all("p")])[:2000]  # Limit to 2000 chars
-                    return raw_text if raw_text else "No detailed content available."
-                except Exception:
-                    return "Website not accessible."
 
-            # 🔹 Process each selected project
-            for company in selected_projects:
+        # 🔹 Extract Website Data using Streamlit’s ChatGPT
+        def extract_project_info(url):
+            if not url.startswith("http"):
+                return "No website available."
+            try:
+                response = requests.get(url, timeout=5)
+                soup = BeautifulSoup(response.text, "html.parser")
+                raw_text = " ".join([p.text for p in soup.find_all("p")])[:2000]  # Limit to 2000 chars
+                
+                # 🧠 Use Streamlit's ChatGPT for summarization
+                summary = st.chat_input(f"Summarize this website content to highlight its business, key products, and impact:\n\n{raw_text}")
+                
+                return summary if summary else "No summary generated."
+            except Exception:
+                return "Website not accessible."
+
+        # 🔹 Process each selected project
+        for company in selected_projects:
+            if project_links.get(company) and project_links[company].startswith("http"):
                 project_descriptions[company] = extract_project_info(project_links[company])
+            else:
+                project_descriptions[company] = "No valid website available."
 
         # 🔹 Display Extracted Info
         st.write("### Extracted Project Info:")
         for company, desc in project_descriptions.items():
             st.write(f"**{company}:** {desc}")
 
-        # 🔹 Generate AI Email (Using Free GPT-4o)
-        if "messages" not in st.session_state:
-            st.session_state["messages"] = []
-
+        # 🔹 Generate AI Email
         if st.button("Generate AI-Powered Email"):
-            with st.chat_message("assistant"):
-                st.markdown("Generating email...")
+            with st.spinner("Generating email..."):
+                email_prompt = f"""
+                Generate a professional business email for a client. The email should introduce our company, highlight these two selected projects, and explain how we can help them with similar solutions.
+                
+                Selected Projects:
+                1. {selected_projects[0]} - {project_descriptions[selected_projects[0]]}
+                2. {selected_projects[1]} - {project_descriptions[selected_projects[1]]}
+                
+                Format it professionally.
+                """
+                
+                email_draft = st.chat_input(email_prompt)
 
-            # 🧠 AI Prompt for Email Generation
-            prompt = f"""
-            Write a professional business email introducing our company to a client. 
-            Highlight how we helped these two projects and explain how we can assist them similarly.
-            1. {selected_projects[0]} - {project_descriptions[selected_projects[0]]}
-            2. {selected_projects[1]} - {project_descriptions[selected_projects[1]]}
-            
-            The email should be engaging, formal, and have a clear call-to-action.
-            """
-
-            # 🔹 Get AI Response Using Streamlit’s Free GPT-4o
-            st.session_state["messages"].append({"role": "user", "content": prompt})
-            st.chat_input("Type here to chat with AI...")  # Enable GPT-4o free chat
+                st.text_area("📧 AI-Generated Email", email_draft, height=350)
 
 else:
     st.info("Enter a keyword to begin your search.")
