@@ -1,3 +1,19 @@
+import openai
+import streamlit as st
+
+# Load API key from Streamlit secrets
+openai.api_key = st.secrets["OPENAI_API_KEY"]
+
+# Test the API
+try:
+    response = openai.ChatCompletion.create(
+        model="gpt-4o",
+        messages=[{"role": "user", "content": "Hello, can you confirm if this API key works?"}]
+    )
+    st.success("✅ API key is working! ChatGPT is ready to use.")
+except Exception as e:
+    st.error(f"❌ API key error: {e}")
+
 import pandas as pd
 import streamlit as st
 import requests
