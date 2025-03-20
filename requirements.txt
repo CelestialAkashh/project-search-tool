@@ -1,3 +1,4 @@
-streamlit
 pandas
-openpyxl
+streamlit
+beautifulsoup4
+requests
