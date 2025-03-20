@@ -1,43 +1,26 @@
-import openai
-import streamlit as st
-
-# Load API key from Streamlit secrets
-openai.api_key = st.secrets["OPENAI_API_KEY"]
-
-# Test the API (Corrected for the new OpenAI version)
-try:
-    response = openai.chat.completions.create(
-        model="gpt-4o",
-        messages=[{"role": "user", "content": "Hello, can you confirm if this API key works?"}]
-    )
-    st.success("✅ API key is working! ChatGPT is ready to use.")
-except Exception as e:
-    st.error(f"❌ API key error: {e}")
-
-
 import pandas as pd
 import streamlit as st
 import requests
 from bs4 import BeautifulSoup
 
-# Load the file directly from GitHub
+# 🔹 Load Excel File from GitHub
 file_url = "https://github.com/CelestialAkashh/project-search-tool/raw/refs/heads/main/Copy%20of%20REAL%20Consolidated%20Project%20Portfolio.xlsx"
 
 @st.cache_data
 def load_data():
-    return pd.read_excel(file_url, sheet_name="New Portfolio")  # Ensure sheet name matches
+    return pd.read_excel(file_url, sheet_name="New Portfolio")
 
 df = load_data()
 
-st.title("🔍 AI-Powered Project Search & Email Generator")
+st.title("🚀 AI-Powered Project Search & Email Generator")
 
-# Show available columns
+# 🔹 Show available columns
 st.write("### Available Columns:", df.columns.tolist())
 
-# Search bar
+# 🔹 Search bar
 search_query = st.text_input("Enter keywords (e.g., React Native, Fintech):")
 
-# Filtering logic
+# 🔹 Filtering logic
 filtered_df = pd.DataFrame()  # Empty DataFrame initially
 
 if search_query:
@@ -52,12 +35,12 @@ if search_query:
     else:
         filtered_df = df[df.apply(lambda row: query in str(row.values).lower(), axis=1)]
 
-# **Display Search Results**
+# 🔹 Display Search Results
 if not filtered_df.empty:
     st.write(f"### Found {len(filtered_df)} matching projects:")
     st.dataframe(filtered_df)
 
-    # **Project Selection**
+    # 🔹 Project Selection
     selected_projects = st.multiselect("Select up to 2 projects", filtered_df["Company Name"].tolist(), max_selections=2)
 
     if selected_projects:
@@ -69,44 +52,48 @@ if not filtered_df.empty:
             link = project_info.get("Link", "No website found")
             project_links[company] = link
             
-            # **Web Scraping (Extract Company Info)**
-            if link.startswith("http"):
+            # 🔹 Extract Website Data
+            def extract_project_info(url):
+                if not url.startswith("http"):
+                    return "No website available."
                 try:
-                    response = requests.get(link, timeout=5)
+                    response = requests.get(url, timeout=5)
                     soup = BeautifulSoup(response.text, "html.parser")
-                    raw_text = " ".join([p.text for p in soup.find_all("p")])[:1000]  # Limit text size
-                    project_descriptions[company] = raw_text if raw_text else "No details extracted."
+                    raw_text = " ".join([p.text for p in soup.find_all("p")])[:2000]  # Limit to 2000 chars
+                    return raw_text if raw_text else "No detailed content available."
                 except Exception:
-                    project_descriptions[company] = "Website not accessible."
-            else:
-                project_descriptions[company] = "No website available."
+                    return "Website not accessible."
 
-        # **Display Extracted Info**
-        st.write("### Extracted Company Info:")
+            # 🔹 Process each selected project
+            for company in selected_projects:
+                project_descriptions[company] = extract_project_info(project_links[company])
+
+        # 🔹 Display Extracted Info
+        st.write("### Extracted Project Info:")
         for company, desc in project_descriptions.items():
             st.write(f"**{company}:** {desc}")
 
-        # **Generate AI Email Button**
+        # 🔹 Generate AI Email (Using Free GPT-4o)
+        if "messages" not in st.session_state:
+            st.session_state["messages"] = []
+
         if st.button("Generate AI-Powered Email"):
-            with st.spinner("Generating email..."):
-                email_draft = f"""
-                Subject: Collaboration Opportunity with {selected_projects[0]} & {selected_projects[1]}
-                
-                Dear [Client Name],
-                
-                I came across your interest in fintech solutions and wanted to share two of our most successful projects:
-                
-                1. **{selected_projects[0]}** - {project_descriptions[selected_projects[0]]}
-                2. **{selected_projects[1]}** - {project_descriptions[selected_projects[1]]}
-                
-                We have helped companies like yours build scalable and innovative fintech solutions. 
-                Let’s discuss how we can support your goals.
-                
-                Best regards,  
-                [Your Name]  
-                [Your Company]
-                """
-                st.text_area("📧 AI-Generated Email", email_draft, height=300)
+            with st.chat_message("assistant"):
+                st.markdown("Generating email...")
+
+            # 🧠 AI Prompt for Email Generation
+            prompt = f"""
+            Write a professional business email introducing our company to a client. 
+            Highlight how we helped these two projects and explain how we can assist them similarly.
+            1. {selected_projects[0]} - {project_descriptions[selected_projects[0]]}
+            2. {selected_projects[1]} - {project_descriptions[selected_projects[1]]}
+            
+            The email should be engaging, formal, and have a clear call-to-action.
+            """
+
+            # 🔹 Get AI Response Using Streamlit’s Free GPT-4o
+            st.session_state["messages"].append({"role": "user", "content": prompt})
+            st.chat_input("Type here to chat with AI...")  # Enable GPT-4o free chat
 
 else:
     st.info("Enter a keyword to begin your search.")
