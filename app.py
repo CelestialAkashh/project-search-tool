@@ -1,6 +1,5 @@
 import pandas as pd
 import streamlit as st
-import openai  # ChatGPT API
 import requests
 from bs4 import BeautifulSoup
 
@@ -15,11 +14,14 @@ df = load_data()
 
 st.title("🔍 AI-Powered Project Search & Email Generator")
 
+# Show available columns
+st.write("### Available Columns:", df.columns.tolist())
+
 # Search bar
 search_query = st.text_input("Enter keywords (e.g., React Native, Fintech):")
 
 # Filtering logic
-filtered_df = df.copy()  # Create a copy to modify
+filtered_df = pd.DataFrame()  # Empty DataFrame initially
 
 if search_query:
     query = search_query.strip().lower()
@@ -33,9 +35,12 @@ if search_query:
     else:
         filtered_df = df[df.apply(lambda row: query in str(row.values).lower(), axis=1)]
 
-# Display results
+# **Display Search Results**
 if not filtered_df.empty:
     st.write(f"### Found {len(filtered_df)} matching projects:")
+    st.dataframe(filtered_df)
+
+    # **Project Selection**
     selected_projects = st.multiselect("Select up to 2 projects", filtered_df["Company Name"].tolist(), max_selections=2)
 
     if selected_projects:
@@ -44,7 +49,7 @@ if not filtered_df.empty:
 
         for company in selected_projects:
             project_info = filtered_df[filtered_df["Company Name"] == company].iloc[0]
-            link = project_info["Link"] if "Link" in project_info else "No website found"
+            link = project_info.get("Link", "No website found")
             project_links[company] = link
             
             # **Web Scraping (Extract Company Info)**
@@ -63,7 +68,7 @@ if not filtered_df.empty:
         st.write("### Extracted Company Info:")
         for company, desc in project_descriptions.items():
             st.write(f"**{company}:** {desc}")
-        
+
         # **Generate AI Email Button**
         if st.button("Generate AI-Powered Email"):
             with st.spinner("Generating email..."):
