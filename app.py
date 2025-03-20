@@ -20,9 +20,23 @@ search_query = st.text_input("Enter keywords (e.g., React Native, Fintech):")
 
 # Filtering logic
 if search_query:
-    keywords = [kw.strip().lower() for kw in search_query.split(",")]
-    filtered_df = df[df.apply(lambda row: any(kw in str(row.values).lower() for kw in keywords), axis=1)]
+    # Convert to lowercase for case-insensitive search
+    query = search_query.strip().lower()
 
+    # Boolean Search
+    if " and " in query:
+        keywords = query.split(" and ")
+        filtered_df = df[df.apply(lambda row: all(kw in str(row.values).lower() for kw in keywords), axis=1)]
+    
+    elif " or " in query:
+        keywords = query.split(" or ")
+        filtered_df = df[df.apply(lambda row: any(kw in str(row.values).lower() for kw in keywords), axis=1)]
+    
+    else:
+        # Default search (single keyword)
+        filtered_df = df[df.apply(lambda row: query in str(row.values).lower(), axis=1)]
+
+    # Display results
     if not filtered_df.empty:
         st.write(f"### Found {len(filtered_df)} matching projects:")
         st.dataframe(filtered_df)
