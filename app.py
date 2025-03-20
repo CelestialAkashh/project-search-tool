@@ -76,38 +76,46 @@ st.write("🔍 Debugging Info:")
 st.write(f"API Key Loaded: {'✅ Yes' if 'OPENROUTER_API_KEY' in st.secrets else '❌ No'}")
 st.write("Sending request to OpenRouter...")
 
-        # 🔹 Generate AI-Powered Email
         def generate_email(company1, desc1, company2, desc2):
-            API_KEY = st.secrets["OPENROUTER_API_KEY"]
-            url = "https://openrouter.ai/api/generate"
-            headers = {"Authorization": f"Bearer {API_KEY}"}
-            prompt = f"""
-            Generate a professional email for a fintech company, highlighting past work done for {company1} and {company2}.
-            - {company1}: {desc1}
-            - {company2}: {desc2}
-            The email should be structured, formal, and engaging.
-            """
+    API_KEY = st.secrets["OPENROUTER_API_KEY"]
+    url = "https://openrouter.ai/api/generate"
+    
+    if not API_KEY:
+        return "❌ Missing API Key! Add it to Streamlit Secrets."
+    
+    headers = {"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"}
+    
+    prompt = f"""
+    Generate a professional email for a fintech company, highlighting past work done for {company1} and {company2}.
+    - {company1}: {desc1}
+    - {company2}: {desc2}
+    The email should be structured, formal, and engaging.
+    """
 
-            payload = {
-                "model": "deepseek-chat",
-                "prompt": prompt,
-                "max_tokens": 500
-            }
+    payload = {"model": "deepseek-chat", "prompt": prompt, "max_tokens": 500}
 
-            try:
-                response = requests.post(url, headers=headers, json=payload)
+    try:
+        response = requests.post(url, headers=headers, json=payload, timeout=10)
 
-                if response.status_code == 200:
-                    data = response.json()
-                    if "choices" in data and len(data["choices"]) > 0:
-                        return data["choices"][0]["message"]["content"]
-                    else:
-                        return "⚠️ AI could not generate a response. Try again."
-                else:
-                    return f"❌ API Error {response.status_code}: {response.text}"
+        if response.status_code == 200:
+            data = response.json()
+            if "choices" in data and len(data["choices"]) > 0:
+                return data["choices"][0]["message"]["content"]
+            else:
+                return "⚠️ AI could not generate a response. Try again."
+        
+        elif response.status_code == 401:
+            return "❌ Invalid API Key! Check your OpenRouter account."
+        
+        else:
+            return f"❌ API Error {response.status_code}: {response.text}"
 
-            except requests.exceptions.RequestException as e:
-                return f"🚨 Network Error: {e}"
+    except requests.exceptions.Timeout:
+        return "⏳ OpenRouter API timed out. Try again later."
+
+    except requests.exceptions.RequestException as e:
+        return f"🚨 Network Error: {e}"
+
 
         # 🔹 AI Email Generation Button
         if st.button("Generate AI-Powered Email"):
