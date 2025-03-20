@@ -64,14 +64,18 @@ if search_query:
                 raw_text = scrape_website(website_url)
 
                 # ChatGPT API call to summarize the text
-                def summarize_text(text):
-                    openai.api_key = "your_openai_api_key_here"  # Replace with your key
-                    response = openai.ChatCompletion.create(
-                        model="gpt-3.5-turbo",
-                        messages=[{"role": "system", "content": "Summarize the following project details in 3-4 sentences, focusing on its key features and value proposition."},
-                                  {"role": "user", "content": text}]
-                    )
-                    return response["choices"][0]["message"]["content"]
+                import openai
+
+def summarize_text(text):
+    response = openai.ChatCompletion.create(
+        model="gpt-4",  # Use "gpt-3.5-turbo" if you want a cheaper option
+        messages=[
+            {"role": "system", "content": "You are an AI assistant that summarizes company details."},
+            {"role": "user", "content": text}
+        ]
+    )
+    return response["choices"][0]["message"]["content"]
+
 
                 summary = summarize_text(raw_text)
 
