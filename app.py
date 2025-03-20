@@ -53,6 +53,9 @@ if not filtered_df.empty:
 
         # 🔹 Extract Website Data using BeautifulSoup
         def extract_project_info(url):
+            # Debugging: Print the URL being processed
+            st.write(f"Processing URL: {url}")
+
             # Skip app store URLs as they won't have useful content
             app_store_patterns = [r"play.google.com", r"apps.apple.com"]
             if any(re.search(pattern, url) for pattern in app_store_patterns):
@@ -64,6 +67,11 @@ if not filtered_df.empty:
             try:
                 # Fetch and parse the page
                 response = requests.get(url, timeout=5)
+                
+                # Check if the response is valid
+                if response.status_code != 200:
+                    return f"Error: Unable to reach the website (Status Code: {response.status_code})"
+
                 soup = BeautifulSoup(response.text, "html.parser")
                 raw_text = " ".join([p.text for p in soup.find_all("p")])[:2000]  # Limit to 2000 chars
                 
