@@ -2,7 +2,8 @@ import pandas as pd
 import streamlit as st
 import requests
 from bs4 import BeautifulSoup
-import openai  # Add OpenAI API
+import openai  # OpenAI API for email generation
+import re
 
 # 🔹 Load Excel File from GitHub
 file_url = "https://github.com/CelestialAkashh/project-search-tool/raw/refs/heads/main/Copy%20of%20REAL%20Consolidated%20Project%20Portfolio.xlsx"
@@ -52,21 +53,28 @@ if not filtered_df.empty:
 
         # 🔹 Extract Website Data using BeautifulSoup
         def extract_project_info(url):
+            # Skip app store URLs as they won't have useful content
+            app_store_patterns = [r"play.google.com", r"apps.apple.com"]
+            if any(re.search(pattern, url) for pattern in app_store_patterns):
+                return "This is an app store link, no summary available."
+
             if not url.startswith("http"):
                 return "No website available."
+            
             try:
+                # Fetch and parse the page
                 response = requests.get(url, timeout=5)
                 soup = BeautifulSoup(response.text, "html.parser")
                 raw_text = " ".join([p.text for p in soup.find_all("p")])[:2000]  # Limit to 2000 chars
                 
-                # 🧠 Use Streamlit's ChatGPT for summarization
-                with st.chat_message("assistant"):
-                    summary = st.write(f"🔍 **Extracted Summary for {url}:**")
-                    summary = st.write(raw_text[:1000])  # Displaying some extracted text
-                
-                return summary if summary else "No summary generated."
-            except Exception:
-                return "Website not accessible."
+                # If no text was extracted, handle accordingly
+                if not raw_text.strip():
+                    return "No significant text found on the page."
+
+                # Return the first 1000 characters of the extracted text
+                return raw_text[:1000]
+            except Exception as e:
+                return f"Error extracting data: {str(e)}"
 
         # 🔹 Process each selected project
         for company in selected_projects:
