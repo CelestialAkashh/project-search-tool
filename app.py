@@ -81,21 +81,30 @@ if not filtered_df.empty:
         for company, desc in project_descriptions.items():
             st.write(f"**{company}:** {desc}")
 
-        # 🔹 Generate AI Email
+        # 🔹 Generate **Professional** AI Email
         if st.button("Generate AI-Powered Email"):
             email_prompt = f"""
-            Subject: Exploring Collaboration Opportunities
+            Subject: Bringing Your Fintech Vision to Life with AI, Cloud & Scalable Tech
 
             Dear [Client's Name],
 
-            I hope you're doing well! I wanted to introduce our company and discuss potential collaboration. We specialize in delivering tailored solutions, and I noticed that your company, {selected_projects[0]}, is doing some great work in the industry.
+            I hope you’re doing well. At [Your Company Name], we specialize in helping Fintech innovators like you **build secure, scalable, and AI-driven digital solutions**. 
 
-            Here are two relevant projects we have worked on:
+            We've successfully delivered solutions for industry leaders like **{selected_projects[0]}** and **{selected_projects[1]}**, tackling key challenges in financial technology.
 
-            1. {selected_projects[0]} - {project_descriptions[selected_projects[0]]}
-            2. {selected_projects[1]} - {project_descriptions[selected_projects[1]]}
+            🔹 **Recent Work:**
+            - **{selected_projects[0]}**: {project_descriptions[selected_projects[0]]}
+            - **{selected_projects[1]}**: {project_descriptions[selected_projects[1]]}
 
-            I'd love to connect and explore how we can help you with similar solutions. Let me know if you're open to a quick call.
+            🔹 **How We Help Fintech Businesses Like Yours:**
+            - **AI-Driven Automation:** Improve efficiency and decision-making with advanced AI solutions.
+            - **Security & Compliance:** Build platforms with **enterprise-grade security** and **regulatory compliance**.
+            - **Cloud Optimization:** Deliver **scalable, cost-efficient cloud architectures** for seamless operations.
+            - **End-to-End Development:** From **UI/UX to full-stack, AI, and data solutions**, we bring your product to life.
+
+            We work on **flexible engagement models** (hourly, monthly, or fixed-price contracts) to match your needs.
+
+            Let’s set up a quick call to explore how we can help bring your vision to reality. Let me know a time that works for you.
 
             Best regards,  
             [Your Name]  
