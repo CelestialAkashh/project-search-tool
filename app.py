@@ -53,11 +53,13 @@ if not filtered_df.empty:
 
         # 🔹 Extract Website Data using BeautifulSoup
         def extract_project_info(url):
+            # Define app store patterns here
+            app_store_patterns = [r"play.google.com", r"apps.apple.com"]
+
             # Debugging: Print the URL being processed
             st.write(f"Processing URL: {url}")
 
             # Skip app store URLs as they won't have useful content
-            app_store_patterns = [r"play.google.com", r"apps.apple.com"]
             if any(re.search(pattern, url) for pattern in app_store_patterns):
                 return None  # Skip app store links entirely
 
