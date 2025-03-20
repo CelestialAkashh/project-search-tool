@@ -2,8 +2,6 @@ import pandas as pd
 import streamlit as st
 import requests
 from bs4 import BeautifulSoup
-import openai  # OpenAI API for email generation
-import re
 
 # 🔹 Load Excel File from GitHub
 file_url = "https://github.com/CelestialAkashh/project-search-tool/raw/refs/heads/main/Copy%20of%20REAL%20Consolidated%20Project%20Portfolio.xlsx"
@@ -51,41 +49,27 @@ if not filtered_df.empty:
             links = project_info.get("Link", "").split(",")  # Split multiple links by commas
             project_links[company] = [link.strip() for link in links if 'http' in link]  # Only consider valid links
 
-        # 🔹 App Store Patterns: This is now declared outside the function
+        # 🔹 Filter out app store links and process valid website links only
         app_store_patterns = [r"play.google.com", r"apps.apple.com"]
 
         # 🔹 Extract Website Data using BeautifulSoup
         def extract_project_info(url):
-            # Debugging: Print the URL being processed
-            st.write(f"Processing URL: {url}")
-
-            # Skip app store URLs as they won't have useful content
-            if any(re.search(pattern, url) for pattern in app_store_patterns):
+            if any(pattern in url for pattern in app_store_patterns):
                 return None  # Skip app store links entirely
 
             if not url.startswith("http"):
-                return "No website available."
-            
+                return "Invalid URL"
+
             try:
-                # Fetch and parse the page
                 response = requests.get(url, timeout=5)
-                
-                # Log the status code for debugging
-                st.write(f"Response status code for {url}: {response.status_code}")
-                
-                # Check if the response is valid
-                if response.status_code != 200:
+                if response.status_code == 200:
+                    soup = BeautifulSoup(response.text, "html.parser")
+                    raw_text = " ".join([p.text for p in soup.find_all("p")])[:2000]  # Limit to 2000 chars
+                    if not raw_text.strip():
+                        return "No significant text found on the page."
+                    return raw_text[:1000]
+                else:
                     return f"Error: Unable to reach the website (Status Code: {response.status_code})"
-
-                soup = BeautifulSoup(response.text, "html.parser")
-                raw_text = " ".join([p.text for p in soup.find_all("p")])[:2000]  # Limit to 2000 chars
-                
-                # If no text was extracted, handle accordingly
-                if not raw_text.strip():
-                    return "No significant text found on the page."
-
-                # Return the first 1000 characters of the extracted text
-                return raw_text[:1000]
             except Exception as e:
                 return f"Error extracting data: {str(e)}"
 
@@ -95,8 +79,7 @@ if not filtered_df.empty:
 
             # Iterate over available links and extract from the first valid website link
             for link in project_links[company]:
-                # Process only if it's a valid non-app store link
-                if not any(re.search(pattern, link) for pattern in app_store_patterns):
+                if not any(pattern in link for pattern in app_store_patterns):
                     website_data = extract_project_info(link)
                     if website_data:
                         break  # Stop after the first valid website is processed
@@ -112,9 +95,6 @@ if not filtered_df.empty:
         # 🔹 Generate AI Email
         if st.button("Generate AI-Powered Email"):
             with st.spinner("Generating email..."):
-                # OpenAI API key setup
-                openai.api_key = "your-openai-api-key-here"  # Set your API key here
-
                 email_prompt = f"""
                 Generate a professional business email for a client. The email should introduce our company, highlight these two selected projects, and explain how we can help them with similar solutions.
                 
@@ -125,15 +105,5 @@ if not filtered_df.empty:
                 Format it professionally.
                 """
 
-                # Make API call to OpenAI to generate email
-                response = openai.Completion.create(
-                    engine="text-davinci-003",  # You can use the GPT-3 or GPT-4 model depending on your subscription
-                    prompt=email_prompt,
-                    max_tokens=500,
-                    temperature=0.7
-                )
-
-                # Display the generated email
-                email_content = response.choices[0].text.strip()
-
-                st.text_area("📧 AI-Generated Email", email_content, height=350)
+                # Display the generated email (in this case, just return the prompt)
+                st.text_area("📧 AI-Generated Email", email_prompt, height=350)
