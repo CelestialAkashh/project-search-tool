@@ -70,6 +70,9 @@ if not filtered_df.empty:
                 # Fetch and parse the page
                 response = requests.get(url, timeout=5)
                 
+                # Log the status code for debugging
+                st.write(f"Response status code for {url}: {response.status_code}")
+                
                 # Check if the response is valid
                 if response.status_code != 200:
                     return f"Error: Unable to reach the website (Status Code: {response.status_code})"
