@@ -1,5 +1,5 @@
 pandas
 streamlit
-beautifulsoup4
 requests
-openai
+beautifulsoup4
+playwright
