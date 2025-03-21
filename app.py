@@ -3,6 +3,13 @@ import streamlit as st
 import requests
 from bs4 import BeautifulSoup
 import re
+import os
+import subprocess
+
+# Ensure Playwright is fully installed and set up
+if not os.path.exists("/root/.cache/ms-playwright"):
+    subprocess.run(["playwright", "install", "chromium"], check=True)
+
 
 # 🔹 Load Excel File from GitHub
 file_url = "https://github.com/CelestialAkashh/project-search-tool/raw/refs/heads/main/Copy%20of%20REAL%20Consolidated%20Project%20Portfolio.xlsx"
@@ -43,24 +50,31 @@ if not filtered_df.empty:
         project_descriptions = {}
         
         # 🔹 Web Scraping Function
+            from playwright.sync_api import sync_playwright
+
         def extract_project_info(urls):
-            """Extracts website title & meta description"""
             valid_links = [link.strip() for link in urls.split() if 'http' in link and not any(re.search(pattern, link) for pattern in [r"play.google.com", r"apps.apple.com"])]
-            if not valid_links:
-                return "No valid website available."
+
+        if not valid_links:
+            return "No valid website available."
+
+        with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        page = browser.new_page()
 
             for url in valid_links:
-                try:
-                    response = requests.get(url, timeout=5)
-                    if response.status_code == 200:
-                        soup = BeautifulSoup(response.text, "html.parser")
-                        title = soup.title.text if soup.title else "No title found"
-                        meta_desc = soup.find("meta", attrs={"name": "description"})
-                        description = meta_desc["content"] if meta_desc else "No description available."
-                        return f"{title} - {description}"
-                except:
-                    continue
-            return "No valid website available."
+            try:
+                page.goto(url, timeout=10000)  # Waits for JavaScript to load
+                title = page.title()
+                description = page.query_selector("meta[name='description']")
+                desc_text = description.get_attribute("content") if description else "No description available."
+                browser.close()
+                return f"{title} - {desc_text}"
+            except:
+                continue
+
+    return "No valid website available."
+
         
         # 🔹 Process selected projects
         for company in selected_projects:
