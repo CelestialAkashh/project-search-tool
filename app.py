@@ -50,7 +50,7 @@ if not filtered_df.empty:
         project_descriptions = {}
         
         # 🔹 Web Scraping Function
-            from playwright.sync_api import sync_playwright
+from playwright.sync_api import sync_playwright
 
         def extract_project_info(urls):
             valid_links = [link.strip() for link in urls.split() if 'http' in link and not any(re.search(pattern, link) for pattern in [r"play.google.com", r"apps.apple.com"])]
