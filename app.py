@@ -50,19 +50,19 @@ if not filtered_df.empty:
         project_descriptions = {}
         
         # 🔹 Web Scraping Function
-from playwright.sync_api import sync_playwright
+        from playwright.sync_api import sync_playwright
 
-        def extract_project_info(urls):
-            valid_links = [link.strip() for link in urls.split() if 'http' in link and not any(re.search(pattern, link) for pattern in [r"play.google.com", r"apps.apple.com"])]
+def extract_project_info(urls):
+    valid_links = [link.strip() for link in urls.split() if 'http' in link and not any(re.search(pattern, link) for pattern in [r"play.google.com", r"apps.apple.com"])]
 
-        if not valid_links:
-            return "No valid website available."
+    if not valid_links:
+        return "No valid website available."
 
-        with sync_playwright() as p:
+    with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         page = browser.new_page()
 
-            for url in valid_links:
+        for url in valid_links:
             try:
                 page.goto(url, timeout=10000)  # Waits for JavaScript to load
                 title = page.title()
