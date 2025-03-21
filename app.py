@@ -77,10 +77,14 @@ def extract_project_info(urls):
 
         
         # 🔹 Process selected projects
-        for company in selected_projects:
-            project_info = filtered_df[filtered_df["Company Name"] == company].iloc[0]
-            with st.spinner(f"Extracting info for {company}..."):
-                project_descriptions[company] = extract_project_info(project_info.get("Link", ""))
+    if selected_projects:
+    project_descriptions = {}
+
+    # Process selected projects
+    for company in selected_projects:
+        project_info = filtered_df[filtered_df["Company Name"] == company].iloc[0]
+        with st.spinner(f"Extracting info for {company}..."):
+            project_descriptions[company] = extract_project_info(project_info.get("Link", ""))
         
         # 🔹 Display Extracted Info
         st.write("### Extracted Project Info:")
