@@ -1,14 +1,8 @@
 import pandas as pd
 import streamlit as st
 import requests
+from bs4 import BeautifulSoup
 import re
-import os
-import subprocess
-from playwright.sync_api import sync_playwright
-
-# Ensure Playwright is fully installed and set up
-if not os.path.exists("/root/.cache/ms-playwright"):
-    subprocess.run(["playwright", "install", "chromium"], check=True)
 
 # 🔹 Load Excel File from GitHub
 file_url = "https://github.com/CelestialAkashh/project-search-tool/raw/refs/heads/main/Copy%20of%20REAL%20Consolidated%20Project%20Portfolio.xlsx"
@@ -45,34 +39,29 @@ if not filtered_df.empty:
     # 🔹 Project Selection
     selected_projects = st.multiselect("Select up to 2 projects", filtered_df["Company Name"].tolist(), max_selections=2)
 
+    def extract_project_info(url):
+        """Scrapes the webpage title and meta description using requests & BeautifulSoup."""
+        if not url or not url.startswith("http"):
+            return "No valid website available."
+
+        try:
+            response = requests.get(url, timeout=10, headers={"User-Agent": "Mozilla/5.0"})
+            if response.status_code != 200:
+                return "Website not accessible."
+
+            soup = BeautifulSoup(response.content, "html.parser")
+            title = soup.title.string if soup.title else "No Title Found"
+            meta_desc = soup.find("meta", attrs={"name": "description"})
+            description = meta_desc["content"] if meta_desc else "No description available."
+
+            return f"{title} - {description}"
+        except requests.exceptions.RequestException:
+            return "Error fetching website data."
+
+    # 🔹 Process selected projects
     if selected_projects:
         project_descriptions = {}
 
-        # 🔹 Web Scraping Function (Replacing BeautifulSoup)
-        def extract_project_info(urls):
-            valid_links = [link.strip() for link in urls.split() if 'http' in link and not any(re.search(pattern, link) for pattern in [r"play.google.com", r"apps.apple.com"])]
-
-            if not valid_links:
-                return "No valid website available."
-
-            with sync_playwright() as p:
-                browser = p.chromium.launch(headless=True)
-                page = browser.new_page()
-
-                for url in valid_links:
-                    try:
-                        page.goto(url, timeout=10000)  # Waits for JavaScript to load
-                        title = page.title()
-                        description = page.query_selector("meta[name='description']")
-                        desc_text = description.get_attribute("content") if description else "No description available."
-                        browser.close()
-                        return f"{title} - {desc_text}"
-                    except:
-                        continue
-
-            return "No valid website available."
-
-        # 🔹 Process selected projects
         for company in selected_projects:
             project_info = filtered_df[filtered_df["Company Name"] == company].iloc[0]
             with st.spinner(f"Extracting info for {company}..."):
