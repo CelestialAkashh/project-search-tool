@@ -76,15 +76,15 @@ def extract_project_info(urls):
     return "No valid website available."
 
         
-        # 🔹 Process selected projects
+    # 🔹 Process selected projects
     if selected_projects:
     project_descriptions = {}
 
     # Process selected projects
-    for company in selected_projects:
-        project_info = filtered_df[filtered_df["Company Name"] == company].iloc[0]
-        with st.spinner(f"Extracting info for {company}..."):
-            project_descriptions[company] = extract_project_info(project_info.get("Link", ""))
+        for company in selected_projects:
+            project_info = filtered_df[filtered_df["Company Name"] == company].iloc[0]
+            with st.spinner(f"Extracting info for {company}..."):
+                project_descriptions[company] = extract_project_info(project_info.get("Link", ""))
 
         
         # 🔹 Display Extracted Info
